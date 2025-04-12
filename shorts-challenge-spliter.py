@@ -34,7 +34,6 @@ def create_name_to_group_mapping(idol_data: pd.DataFrame) -> Tuple[Dict[str, str
         # Add Korean group name version too
         k_group = idol_data[idol_data['group (english)'].str.lower() == group]['group (korean)'].iloc[0].lower()
         name_to_group[k_group] = group
-    print(group_to_members)
     return name_to_group, group_to_members
 
 def is_challenge_short(hashtags: List[str], name_to_group: Dict[str, str], 
