@@ -5,8 +5,8 @@ from collections import defaultdict
 
 shorts_data_path = "./data-processed/kpop_shorts_data_hashtag_processed.json"
 idol_data_path = "./data-original/kpop-idol.csv"
-challenge_output_path = "./data-processed/kpop-challenge-shorts.json"
-non_challenge_output_path = "./data-processed/kpop-non-challenge-shorts.json"
+challenge_output_path = "./data-processed/kpop-challenge-shorts-new.json"
+non_challenge_output_path = "./data-processed/kpop-non-challenge-shorts-new.json"
 
 def create_name_to_group_mapping(idol_data: pd.DataFrame) -> Tuple[Dict[str, str], Dict[str, Set[str]]]:
     """Create mappings from names to groups and groups to their members"""
@@ -40,35 +40,50 @@ def is_challenge_short(hashtags: List[str], name_to_group: Dict[str, str],
                        group_to_members: Dict[str, Set[str]], current_group: str) -> bool:
     """
     Check if a short is a challenge based on hashtags.
-    A challenge short must contain:
-    1. At least one reference to the current group or its members, AND
-    2. At least one reference to a different group or its members
+
+    To determine if a short is a 'challenge', apply the following logic:
+    1. The short must contain at least one hashtag referring to the current group or one of its members.
+    - If a member name is shared across multiple groups, assume the hashtag refers to the current group.
+    2. It must also contain at least one hashtag referring to a *different* group or one of *its* members (excluding overlaps with the current group).
     """
+
     # Clean and lowercase hashtags
     clean_tags = [tag.lower().strip('#') for tag in hashtags]
-    current_group = current_group.lower()
+    current_group_lower = current_group.lower()
     
+    # Get members of the current group (lowercase)
+    current_group_members = {member.lower() for member in group_to_members.get(current_group_lower, set())}
+    # Also include the group names themselves (English and potentially Korean mapped version)
+    current_group_members.add(current_group_lower)
+    for name, group in name_to_group.items():
+        if group == current_group_lower and name not in current_group_members:
+             # Find potential Korean group name mapped to the English current_group
+             if name not in group_to_members: # Ensure it's likely a group name, not just another member
+                 current_group_members.add(name)
+
+
     # Track if we've found the current group and any other group
     found_own_group = False
     found_other_group = False
     
-    # Find all mentioned groups in hashtags
-    mentioned_groups = set()
-    
     for tag in clean_tags:
-        if tag in name_to_group:
-            group = name_to_group[tag]
-            mentioned_groups.add(group)
-            
-            if group == current_group:
-                found_own_group = True
-            else:
+        # Priority check: Is the tag a member or name associated with the current group?
+        if tag in current_group_members:
+            found_own_group = True
+        # Secondary check: If not directly associated with the current group, check the general mapping
+        elif tag in name_to_group:
+            mapped_group = name_to_group[tag]
+            # If the mapping points to a *different* group, mark found_other_group
+            if mapped_group != current_group_lower:
                 found_other_group = True
-    
+            # If the mapping points to the *current* group (e.g. group name itself not in group_to_members),
+            # ensure found_own_group is True. This handles cases where the tag is the group name itself.
+            elif mapped_group == current_group_lower:
+                 found_own_group = True
+
     # Return true only if both conditions are met
-    if(found_own_group and found_other_group):
-        return True
-    return False
+    return found_own_group and found_other_group
+
 def main():
     # Load the datasets
     idol_data = pd.read_csv(idol_data_path)
