@@ -6,3 +6,7 @@ backup/
 log/
 notes.md
 
+# video parser failed attempts
+videos/
+frames/
+video-parser.py

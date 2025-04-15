@@ -5,8 +5,8 @@ from collections import defaultdict
 
 shorts_data_path = "./data-processed/kpop_shorts_data_hashtag_processed.json"
 idol_data_path = "./data-original/kpop-idol.csv"
-challenge_output_path = "./data-processed/kpop-challenge-shorts-new.json"
-non_challenge_output_path = "./data-processed/kpop-non-challenge-shorts-new.json"
+challenge_output_path = "./data-processed/v1-kpop-challenge-shorts.json"
+non_challenge_output_path = "./data-processed/v1-kpop-non-challenge-shorts.json"
 
 def create_name_to_group_mapping(idol_data: pd.DataFrame) -> Tuple[Dict[str, str], Dict[str, Set[str]]]:
     """Create mappings from names to groups and groups to their members"""
