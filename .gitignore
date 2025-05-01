@@ -10,3 +10,5 @@ notes.md
 videos/
 frames/
 video-parser.py
+
+*.html
